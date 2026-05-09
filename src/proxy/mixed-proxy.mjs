@@ -12,3 +12,13 @@ export function pickRoute(model, { anthropicKey, deepseekKey }) {
     // default to cheap deepseek pro
     return { host: 'api.deepseek.com', port: 443, pathPrefix: '/anthropic', headerName: 'authorization', headerValue: `Bearer ${deepseekKey}`, remap: 'deepseek-v4-pro' };
 }
+
+export function stripForeignThinking(body) {
+    if (!body || !Array.isArray(body.messages)) return body;
+    for (const m of body.messages) {
+        if (m.role === 'assistant' && Array.isArray(m.content)) {
+            m.content = m.content.filter(b => b.type !== 'thinking' && b.type !== 'redacted_thinking');
+        }
+    }
+    return body;
+}
