@@ -1,0 +1,5 @@
+tests/
+docs/
+.github/
+.vscode/
+*.test.mjs

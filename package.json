@@ -1,0 +1,28 @@
+{
+  "name": "deepclaude-mixed-setup",
+  "version": "0.1.0",
+  "description": "Install Claude Desktop with mixed Anthropic/DeepSeek routing.",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "bin": {
+    "deepclaude-mixed-setup": "bin/deepclaude-mixed-setup",
+    "deepclaude-mixed-uninstall": "bin/deepclaude-mixed-uninstall",
+    "claude-mode": "bin/claude-mode"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "node --check src/proxy/mixed-proxy.mjs"
+  },
+  "dependencies": {
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0"
+  },
+  "files": [
+    "bin/", "src/", "README.md", "LICENSE"
+  ],
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/enfono/deepclaude-mixed.git" }
+}
