@@ -163,6 +163,49 @@ Outdated proxy script. Run `npx deepclaude-mixed-setup@latest`.
 
 Run `npx deepclaude-mixed-setup@latest` for latest model names.
 
+### Subagent in Cowork can't reach external hosts (`ConnectionRefused`, `blocked-by-allowlist`)
+
+Three sandbox layers exist. v0.1.6+ writes all three. If still blocked:
+
+1. **Verify managed-settings.json present** (Cowork honors only this):
+   ```bash
+   sudo cat "/Library/Application Support/ClaudeCode/managed-settings.json"
+   ```
+   Must contain `sandbox.network.allowedDomains` with target hosts.
+
+2. **Full quit Claude Desktop**, not window close:
+   ```bash
+   pkill -9 -f "Claude.app"; pkill -9 -f "Claude Helper"; sleep 2; open /Applications/Claude.app
+   ```
+   Sandbox config loads at process start.
+
+3. **Re-run installer** to regenerate all three layers:
+   ```bash
+   npx deepclaude-mixed-setup@latest
+   ```
+   Provide sudo password when prompted.
+
+### `WebFetch` fails with "model doesn't exist" / `deepseek-v4-flash` errors
+
+Stale `~/.zshrc` exports from manual setup phase override the gateway. Check:
+
+```bash
+grep -E "ANTHROPIC_BASE_URL|ANTHROPIC_DEFAULT|CLAUDE_CODE_SUBAGENT_MODEL|ANTHROPIC_AUTH_TOKEN" ~/.zshrc
+```
+
+If anything matches, **remove those lines**. They predate the npm package and bypass the local proxy. After cleaning:
+
+```bash
+source ~/.zshrc
+pkill -9 -f "Claude.app"; sleep 2; open /Applications/Claude.app
+```
+
+Same applies to `~/.bashrc`, `~/.zprofile`, `/etc/launchd.conf`, and `launchctl getenv ANTHROPIC_BASE_URL`. Clean them all.
+
+### Subagent says "AGENT_SECRET needed" or similar auth errors
+
+Different problem. Sandbox is not blocking — the destination server requires auth. Provide the bearer token to the subagent or unblock its credential source. Not a deepclaude-mixed bug.
+
 ---
 
 ## Optional: Real Anthropic Opus
