@@ -9,6 +9,7 @@ import { writeProfile } from '../config/claude-profile.mjs';
 import { setDeploymentMode } from '../config/deployment-mode.mjs';
 import { setEgressAllowedHosts, DEFAULT_HOSTS } from '../config/egress.mjs';
 import { setCliSandboxHosts } from '../config/cli-sandbox.mjs';
+import { setManagedAllowedDomains } from '../config/managed-settings.mjs';
 import { getInstallRoot, getProxyPort } from '../config/paths.mjs';
 import * as autostart from '../autostart/index.mjs';
 import { killClaude, openClaude } from '../claude-app/lifecycle.mjs';
@@ -54,6 +55,18 @@ export async function main() {
 
     const cli = setCliSandboxHosts({ hosts: DEFAULT_HOSTS, merge: true });
     ok(`Claude Code CLI sandbox allowlist: ${cli.length} hosts`);
+
+    info('Cowork-spawned subagents ignore user settings (allowManagedDomainsOnly).');
+    info('Writing managed settings — sudo password may be requested.');
+    try {
+        const managed = setManagedAllowedDomains({ hosts: DEFAULT_HOSTS, merge: true });
+        ok(`Managed sandbox allowlist: ${managed.length} hosts (system-wide, requires Claude restart)`);
+    } catch (e) {
+        warn('Could not write managed settings (sudo declined or failed):');
+        warn(`  ${e.message}`);
+        warn('Subagents in Cowork will be unable to reach external hosts.');
+        warn('Re-run installer when ready to authorize sudo.');
+    }
 
     autostart.install({
         home: homedir(),
