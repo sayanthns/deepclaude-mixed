@@ -87,7 +87,9 @@ export function startProxy({ port = 3200, anthropicKey, deepseekKey, routeOverri
                     ? routeOverride(parsed.model)
                     : pickRoute(parsed.model, { anthropicKey, deepseekKey });
 
-                stripForeignThinking(parsed);
+                // Only strip thinking blocks when sending to Anthropic — DeepSeek
+                // requires its own thinking blocks to be echoed back in multi-turn.
+                if (route.host === 'api.anthropic.com') stripForeignThinking(parsed);
 
                 if (route.remap) parsed.model = route.remap;
                 body = JSON.stringify(parsed);

@@ -1,6 +1,6 @@
 {
   "name": "deepclaude-mixed-setup",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Install Claude Desktop with mixed Anthropic/DeepSeek routing.",
   "type": "module",
   "engines": {
@@ -31,6 +31,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/enfono/deepclaude-mixed.git"
+    "url": "git+https://github.com/sayanthns/deepclaude-mixed.git"
   }
 }

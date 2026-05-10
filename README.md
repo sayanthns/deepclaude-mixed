@@ -2,6 +2,8 @@
 
 Use Claude Desktop with DeepSeek-powered mixed routing. All models route through DeepSeek — Opus → V4 Pro, Sonnet → V4 Pro, Haiku → V4 Flash.
 
+**Full guide:** [docs/GUIDE.md](https://github.com/sayanthns/deepclaude-mixed/blob/master/docs/GUIDE.md)
+
 ## Quick Start
 
 ```bash
@@ -137,4 +139,4 @@ Removes proxy script, auto-start service. Keeps Claude-3p profiles (delete in Cl
 - API key stored in OS auto-start config, never plaintext files
 - Proxy listens `127.0.0.1` only (no external access)
 - No telemetry, no phoning home
-- Thinking blocks stripped before forwarding
+- Thinking blocks stripped only when forwarding to Anthropic (DeepSeek requires them echoed back in multi-turn)
