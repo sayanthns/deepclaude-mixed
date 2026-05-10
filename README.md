@@ -1,6 +1,6 @@
 # deepclaude-mixed-setup
 
-Use Claude Desktop with mixed routing — real Anthropic Opus for hard tasks, DeepSeek for cheap chat.
+Use Claude Desktop with DeepSeek-powered mixed routing. All models route through DeepSeek — Opus → V4 Pro, Sonnet → V4 Pro, Haiku → V4 Flash.
 
 ## Install
 
@@ -10,16 +10,17 @@ npx deepclaude-mixed-setup
 
 You'll be prompted for:
 - DeepSeek API key (required) — get at https://platform.deepseek.com/api_keys
-- Anthropic API key (optional, for real Opus) — get at https://console.anthropic.com → API Keys
+
+Optional: set `ANTHROPIC_API_KEY` env var in the proxy's LaunchAgent/systemd unit to route Opus to real Anthropic.
 
 ## Result
 
 Picker in Claude Desktop:
-| Picker label | Backend | Cost |
-|---|---|---|
-| Opus 4.6 | api.anthropic.com (real) | $$$ |
-| Sonnet 4.6 | DeepSeek V4 Pro | $ |
-| Haiku 4.5 | DeepSeek V4 Flash | ¢ |
+| Picker label | Backend |
+|---|---|
+| Opus 4.6 | DeepSeek V4 Pro |
+| Sonnet 4.6 | DeepSeek V4 Pro |
+| Haiku 4.5 | DeepSeek V4 Flash |
 
 Switch mid-chat via picker, no relaunch.
 

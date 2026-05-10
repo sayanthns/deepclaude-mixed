@@ -4,16 +4,16 @@ import { request as httpRequest } from 'http';
 
 export function pickRoute(model, { anthropicKey, deepseekKey }) {
     const m = (model || '').toLowerCase();
-    if (m.includes('opus')) {
+    if (m.includes('opus') && anthropicKey) {
         return { host: 'api.anthropic.com', port: 443, pathPrefix: '', headerName: 'x-api-key', headerValue: anthropicKey, remap: null };
     }
-    if (m.includes('sonnet')) {
+    if (m.includes('opus') || m.includes('sonnet')) {
         return { host: 'api.deepseek.com', port: 443, pathPrefix: '/anthropic', headerName: 'authorization', headerValue: `Bearer ${deepseekKey}`, remap: 'deepseek-v4-pro' };
     }
     if (m.includes('haiku')) {
         return { host: 'api.deepseek.com', port: 443, pathPrefix: '/anthropic', headerName: 'authorization', headerValue: `Bearer ${deepseekKey}`, remap: 'deepseek-v4-flash' };
     }
-    // default to cheap deepseek pro
+    // default
     return { host: 'api.deepseek.com', port: 443, pathPrefix: '/anthropic', headerName: 'authorization', headerValue: `Bearer ${deepseekKey}`, remap: 'deepseek-v4-pro' };
 }
 
@@ -71,7 +71,7 @@ export function startProxy({ port = 3200, anthropicKey, deepseekKey, routeOverri
                     mode: 'mixed',
                     anthropicKey: anthropicKey ? 'set' : 'MISSING',
                     deepseekKey: deepseekKey ? 'set' : 'MISSING',
-                    routes: { opus: 'anthropic', sonnet: 'deepseek-v4-pro', haiku: 'deepseek-v4-flash' },
+                    routes: { opus: anthropicKey ? 'anthropic' : 'deepseek-v4-pro', sonnet: 'deepseek-v4-pro', haiku: 'deepseek-v4-flash' },
                 }));
                 return;
             }

@@ -21,7 +21,7 @@ function findNode() {
 export async function main() {
     info(`Detected: ${osPlatform()} ${process.arch}, Node ${process.versions.node}`);
 
-    const { deepseekKey, anthropicKey = '' } = await askKeys();
+    const { deepseekKey } = await askKeys();
     if (!deepseekKey) { err('DeepSeek key required'); process.exit(1); }
 
     const installRoot = getInstallRoot();
@@ -53,7 +53,6 @@ export async function main() {
         scriptPath: proxyDest,
         env: {
             DEEPSEEK_API_KEY: deepseekKey,
-            ANTHROPIC_API_KEY: anthropicKey || '',
             PROXY_PORT: String(port),
         },
     });
@@ -64,7 +63,7 @@ export async function main() {
     setTimeout(() => {
         openClaude();
         ok('Done. Pick model in Claude Desktop:');
-        info('  Opus → real Anthropic Opus' + (anthropicKey ? '' : ' (DISABLED — no key provided)'));
+        info('  Opus → DeepSeek V4 Pro');
         info('  Sonnet → DeepSeek V4 Pro');
         info('  Haiku → DeepSeek V4 Flash');
         info(`Proxy status: curl -s http://127.0.0.1:${port}/_proxy/status`);
