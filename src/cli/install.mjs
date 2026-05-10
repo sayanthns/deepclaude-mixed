@@ -7,6 +7,7 @@ import { askKeys } from '../lib/prompts.mjs';
 import { info, ok, warn, err } from '../lib/log.mjs';
 import { writeProfile } from '../config/claude-profile.mjs';
 import { setDeploymentMode } from '../config/deployment-mode.mjs';
+import { setEgressAllowedHosts, DEFAULT_HOSTS } from '../config/egress.mjs';
 import { getInstallRoot, getProxyPort } from '../config/paths.mjs';
 import * as autostart from '../autostart/index.mjs';
 import { killClaude, openClaude } from '../claude-app/lifecycle.mjs';
@@ -46,6 +47,9 @@ export async function main() {
 
     setDeploymentMode({ mode: '3p' });
     ok('Set deploymentMode = 3p');
+
+    const allowed = setEgressAllowedHosts({ hosts: DEFAULT_HOSTS, merge: true });
+    ok(`Cowork egress allowlist: ${allowed.length} hosts (Anthropic, DeepSeek, GitHub, npm, Enfono)`);
 
     autostart.install({
         home: homedir(),

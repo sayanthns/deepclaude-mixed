@@ -5,3 +5,6 @@ node_modules
 .vscode
 docs/superpowers/
 .gitrepo/
+.dcm-backup/
+*.tgz
+.claude/
