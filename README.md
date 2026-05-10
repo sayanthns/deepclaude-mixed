@@ -1,8 +1,10 @@
 # deepclaude-mixed-setup
 
-Use Claude Desktop with DeepSeek-powered mixed routing. All models route through DeepSeek — Opus → V4 Pro, Sonnet → V4 Pro, Haiku → V4 Flash.
+Route Claude Desktop (and Claude Code CLI) through DeepSeek — pay DeepSeek API rates instead of Anthropic's subscription tier.
 
-**Full guide:** [docs/GUIDE.md](https://github.com/sayanthns/deepclaude-mixed/blob/master/docs/GUIDE.md)
+**Setup guide:** [docs/GUIDE.md](https://github.com/sayanthns/deepclaude-mixed/blob/master/docs/GUIDE.md) | **Team guide (Claude Code / VS Code / Cursor):** [docs/TEAM-GUIDE.md](https://github.com/sayanthns/deepclaude-mixed/blob/master/docs/TEAM-GUIDE.md)
+
+---
 
 ## Quick Start
 
@@ -10,36 +12,96 @@ Use Claude Desktop with DeepSeek-powered mixed routing. All models route through
 npx deepclaude-mixed-setup
 ```
 
-Paste your DeepSeek API key when prompted. Done. Get a key at [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys).
+Paste your DeepSeek API key when prompted. Claude Desktop restarts with DeepSeek routing active.
 
-**Requirements:** Node.js 18+, Claude Desktop installed. macOS / Windows 10+ / Linux with systemd.
+Get a key: [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
 
-## What You Get
+**Requirements:** Node.js 18+, Claude Desktop installed. macOS / Windows 10+ / Linux (systemd).
 
-Picker in Claude Desktop:
-| Picker Label | Backend |
-|---|---|
-| Opus 4.6 | DeepSeek V4 Pro |
-| Sonnet 4.6 | DeepSeek V4 Pro |
-| Haiku 4.5 | DeepSeek V4 Flash |
+---
+
+## Model Routing
+
+| Picker | Backend | Notes |
+|---|---|---|
+| Opus 4.6 | DeepSeek V4 Pro | Matches reasoning quality |
+| Sonnet 4.6 | DeepSeek V4 Pro | Default workhorse |
+| Haiku 4.5 | DeepSeek V4 Flash | Fast + cheap |
 
 Switch mid-chat via picker — no restart needed.
+
+---
+
+## Switching Between DeepSeek (3p) and Anthropic (1p)
+
+The proxy supports two modes. Switch any time, no reinstall needed.
+
+```bash
+claude-mode 3p       # route through DeepSeek (default after install)
+claude-mode 1p       # use your Anthropic Pro subscription directly
+claude-mode toggle   # flip current mode
+claude-mode status   # show current mode
+```
+
+**What changes:**
+- `3p` — Claude Desktop sends requests to your local proxy → DeepSeek API
+- `1p` — Claude Desktop talks directly to Anthropic servers (your Pro plan)
+
+Restart Claude Desktop after switching mode for it to take effect.
+
+---
+
+## Upgrading
+
+Existing installs: re-run the installer to deploy the latest proxy script.
+
+```bash
+npx deepclaude-mixed-setup@latest
+```
+
+Your API key is not re-asked if already set in the auto-start config.
+
+> **v0.1.2 fix:** Thinking blocks were incorrectly stripped on DeepSeek routes, causing 400 errors on multi-turn conversations with extended thinking enabled. Fixed — existing users must upgrade.
+
+---
 
 ## Commands
 
 ```bash
-# Toggle between DeepSeek routing and Anthropic Pro
-claude-mode 3p       # use DeepSeek routing
-claude-mode 1p       # use Anthropic Pro subscription
-claude-mode toggle   # flip current mode
-claude-mode status   # show current
+# Mode switching
+claude-mode 3p | 1p | toggle | status
 
-# Check proxy health
+# Proxy health
 curl -s http://127.0.0.1:3200/_proxy/status
 
-# Uninstall everything
+# Uninstall
 npx deepclaude-mixed-uninstall
 ```
+
+---
+
+## How It Works
+
+1. Installer writes a Claude Desktop gateway profile under `Claude-3p/configLibrary/`
+2. Sets `deploymentMode = "3p"` in Claude's config — activates third-party inference
+3. Installs auto-start service (LaunchAgent / systemd / Task Scheduler) running local proxy on `127.0.0.1:3200`
+4. Proxy intercepts Claude's API calls, remaps model names to DeepSeek equivalents
+5. Thinking blocks from DeepSeek are preserved and echoed back on multi-turn (required by DeepSeek API); stripped only when forwarding to Anthropic
+
+---
+
+## Files
+
+| Path | Purpose |
+|---|---|
+| `~/.deepclaude-mixed/mixed-proxy.mjs` | Proxy script (auto-started) |
+| `Claude-3p/configLibrary/<uuid>.json` | Gateway profile |
+| `Claude-3p/claude_desktop_config.json` | `deploymentMode: "3p"` |
+| macOS: `~/Library/LaunchAgents/com.deepclaude.proxy.plist` | Auto-start |
+| Linux: `~/.config/systemd/user/deepclaude-proxy.service` | Auto-start |
+| Windows: Task Scheduler `DeepclaudeProxy` | Auto-start |
+
+---
 
 ## Verify Installation
 
@@ -60,40 +122,21 @@ Expected:
 }
 ```
 
-Open Claude Desktop. Picker shows Opus, Sonnet, Haiku. Send a message — works.
-
-## How It Works
-
-1. Installer writes a Claude Desktop gateway profile under `Claude-3p/configLibrary/`
-2. Sets `deploymentMode = "3p"` in Claude's config — switches to third-party inference
-3. Installs auto-start service (LaunchAgent / systemd / Task Scheduler) that runs local proxy on `127.0.0.1:3200`
-4. Proxy intercepts Claude's API calls, remaps models to DeepSeek, strips foreign thinking blocks
-5. Restarts Claude Desktop so picker picks up new profiles
-
-## Files
-
-| Path | Purpose |
-|---|---|
-| `~/.deepclaude-mixed/mixed-proxy.mjs` | Proxy script |
-| `Claude-3p/configLibrary/<uuid>.json` | Gateway profile |
-| `Claude-3p/configLibrary/_meta.json` | Profile index |
-| `Claude-3p/claude_desktop_config.json` | `deploymentMode: "3p"` |
-| macOS: `~/Library/LaunchAgents/com.deepclaude.proxy.plist` | Auto-start |
-| Linux: `~/.config/systemd/user/deepclaude-proxy.service` | Auto-start |
-| Windows: Task Scheduler `DeepclaudeProxy` | Auto-start |
+---
 
 ## Troubleshooting
 
 ### "Unable to connect to API" in Claude Desktop
 
-Proxy not running. Check:
+Proxy not running.
 
 **macOS:**
 ```bash
 launchctl list | grep deepclaude
 tail /tmp/com.deepclaude.proxy.err.log
+# Restart:
 launchctl unload ~/Library/LaunchAgents/com.deepclaude.proxy.plist
-launchctl load ~/Library/LaunchAgents/com.deepclaude.proxy.plist
+launchctl load  ~/Library/LaunchAgents/com.deepclaude.proxy.plist
 ```
 
 **Linux:**
@@ -110,21 +153,29 @@ type %TEMP%\deepclaude-proxy.err.log
 
 ### Still shows Pro plan in Claude Desktop Settings
 
-App is in 1p mode. Run `claude-mode 3p`.
+In 1p mode. Run `claude-mode 3p` then restart Claude Desktop.
+
+### 400 error on multi-turn / extended thinking
+
+Outdated proxy script. Run `npx deepclaude-mixed-setup@latest`.
 
 ### Invalid model errors
 
-Re-run `npx deepclaude-mixed-setup@latest` for latest config.
+Run `npx deepclaude-mixed-setup@latest` for latest model names.
+
+---
 
 ## Optional: Real Anthropic Opus
 
-Add `ANTHROPIC_API_KEY` env var to auto-start config. Opus picker routes to `api.anthropic.com` instead of DeepSeek. Edit:
+Set `ANTHROPIC_API_KEY` in the auto-start config. Opus picker routes to `api.anthropic.com`; Sonnet and Haiku stay on DeepSeek.
 
-- **macOS:** `~/Library/LaunchAgents/com.deepclaude.proxy.plist` → add to `EnvironmentVariables`
-- **Linux:** `~/.config/systemd/user/deepclaude-proxy.service` → add `Environment=ANTHROPIC_API_KEY=...`
+- **macOS:** edit `~/Library/LaunchAgents/com.deepclaude.proxy.plist` → add to `EnvironmentVariables`
+- **Linux:** edit `~/.config/systemd/user/deepclaude-proxy.service` → add `Environment=ANTHROPIC_API_KEY=sk-ant-...`
 - **Windows:** re-run installer with `ANTHROPIC_API_KEY` env var set
 
 Restart proxy service after edit.
+
+---
 
 ## Uninstall
 
@@ -132,11 +183,13 @@ Restart proxy service after edit.
 npx deepclaude-mixed-uninstall
 ```
 
-Removes proxy script, auto-start service. Keeps Claude-3p profiles (delete in Claude Desktop UI).
+Removes proxy script and auto-start service. Claude-3p profiles remain — delete via Claude Desktop UI if desired.
+
+---
 
 ## Security
 
-- API key stored in OS auto-start config, never plaintext files
-- Proxy listens `127.0.0.1` only (no external access)
+- API key stored in OS auto-start config, never in plaintext files elsewhere
+- Proxy listens on `127.0.0.1` only — no external network access
 - No telemetry, no phoning home
-- Thinking blocks stripped only when forwarding to Anthropic (DeepSeek requires them echoed back in multi-turn)
+- Thinking blocks from DeepSeek preserved in-flight (required by API); stripped only before forwarding to Anthropic

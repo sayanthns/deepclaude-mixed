@@ -169,4 +169,4 @@ Removes: proxy script, auto-start service. Keeps: Claude-3p profiles (delete man
 - API keys stored in OS auto-start configs, never in plaintext files
 - Proxy listens on `127.0.0.1` only (localhost, no external access)
 - No telemetry, no phoning home
-- Thinking blocks stripped before forwarding (prevents cross-provider signature errors)
+- Thinking blocks from DeepSeek preserved in-flight (required by API); stripped only before forwarding to Anthropic
