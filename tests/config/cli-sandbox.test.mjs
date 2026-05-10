@@ -41,12 +41,24 @@ describe('CLI sandbox allowlist', () => {
         const cfg = JSON.parse(readFileSync(p, 'utf8'));
         expect(cfg.enabledPlugins.foo).toBe(true);
         expect(cfg.hooks.UserPromptSubmit[0].matcher).toBe('');
-        expect(cfg.sandbox.network.allowedHosts).toEqual(['x.com']);
+        expect(cfg.sandbox.network.allowedDomains).toEqual(['x.com']);
     });
 
     it('dedupes on merge', () => {
         setCliSandboxHosts({ home: tmp.home, hosts: ['a.com', 'b.com'] });
         setCliSandboxHosts({ home: tmp.home, hosts: ['b.com', 'c.com'] });
         expect(getCliSandboxHosts({ home: tmp.home }).sort()).toEqual(['a.com', 'b.com', 'c.com']);
+    });
+
+    it('migrates legacy allowedHosts → allowedDomains', () => {
+        const p = join(tmp.home, '.claude', 'settings.json');
+        mkdirSync(dirname(p), { recursive: true });
+        writeFileSync(p, JSON.stringify({
+            sandbox: { network: { allowedHosts: ['legacy.com', 'old.com'] } },
+        }));
+        setCliSandboxHosts({ home: tmp.home, hosts: ['new.com'] });
+        const cfg = JSON.parse(readFileSync(p, 'utf8'));
+        expect(cfg.sandbox.network.allowedHosts).toBeUndefined();
+        expect(cfg.sandbox.network.allowedDomains.sort()).toEqual(['legacy.com', 'new.com', 'old.com']);
     });
 });
