@@ -440,22 +440,57 @@ Save (`Ctrl+S`).
 | Continue: Model not in dropdown | Reload VS Code: `Ctrl+Shift+P` → Developer: Reload Window |
 | Continue: Tab autocomplete not working | Both `models` AND `tabAutocompleteModel` must have Haiku |
 
-### WSL Users
+### WSL Users (Windows Subsystem for Linux)
 
-**Claude Code extension with Remote-WSL:**
-Env vars set inside WSL are picked up by the extension running in Remote-WSL context. Follow the [Claude Code CLI](#claude-code-cli) Linux instructions inside WSL.
+> **Do not rely on the Windows-side proxy from WSL.** WSL's `127.0.0.1` is its own loopback — the Windows proxy at `127.0.0.1:3200` is not reachable. Install the proxy **inside WSL** instead.
 
-**Continue with Remote-WSL (recommended for Continue):**
-Follow Steps 1-4 inside your WSL VS Code session. Continue runs in WSL context. Config goes to `~/.continue/config.json` inside WSL. Proxy reachable at `127.0.0.1:3200` (WSL2 with `networkingMode=mirrored`).
+**Step 1 — Install Node inside WSL (if not present):**
+```bash
+node --version || (curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs)
+```
 
-**Continue on Windows host:**
-Proxy runs on Windows. Continue extension runs on Windows. Config path: `%USERPROFILE%\.continue\config.json`. Everything uses `127.0.0.1`.
+**Step 2 — Install proxy inside WSL:**
+```bash
+npx deepclaude-mixed-setup
+```
+Paste DeepSeek key. Proxy now runs at `127.0.0.1:3200` inside WSL.
 
-Either way: verify proxy reachable:
+**Step 3 — Set env vars inside WSL:**
+```bash
+echo 'export ANTHROPIC_BASE_URL=http://127.0.0.1:3200' >> ~/.bashrc
+echo 'export ANTHROPIC_API_KEY=unused' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**Step 4 — Verify:**
 ```bash
 curl -s http://127.0.0.1:3200/_proxy/status
+# Must show "deepseekKey": "set"
 ```
-Must show `"deepseekKey": "set"`.
+
+**Step 5 — VS Code Claude Code extension:**
+1. Open VS Code → connect to WSL (`Ctrl+Shift+P` → **Remote-WSL: Connect to WSL**)
+2. `Ctrl+Shift+X` → search **Claude Code** → click **Install in WSL** (not "Install" — must say WSL)
+3. `Ctrl+Shift+P` → **Claude Code: Open**
+4. Send test message — should respond through DeepSeek
+
+**Step 5 (alt) — Continue extension in WSL:**
+1. In WSL-connected VS Code: install Continue extension (Install in WSL)
+2. Config at `~/.continue/config.json` inside WSL:
+```json
+{
+  "models": [
+    {
+      "title": "DeepSeek Sonnet",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "apiBase": "http://127.0.0.1:3200",
+      "apiKey": "unused"
+    }
+  ]
+}
+```
+3. Reload VS Code window (`Ctrl+Shift+P` → Developer: Reload Window)
 
 ---
 
