@@ -142,15 +142,48 @@ Remove or unset `ANTHROPIC_BASE_URL`. Set `ANTHROPIC_API_KEY` to your real Anthr
 
 ---
 
-## VS Code (Continue)
+## VS Code
 
-[Continue](https://marketplace.visualstudio.com/items?itemName=Continue.continue) — open-source, supports custom Anthropic endpoints. One extension for all OS.
+Two options. **Claude Code extension** (recommended — what the team uses) or **Continue** (open-source alternative).
 
-### Step 1 — Install
+---
+
+### Option A — Claude Code Extension (Recommended)
+
+The official [Claude Code VS Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code) wraps the Claude Code CLI. It honors the same `ANTHROPIC_BASE_URL` / `ANTHROPIC_API_KEY` environment variables.
+
+**Step 1 — Set env vars**
+
+Follow the [Claude Code CLI](#claude-code-cli) section for your OS to set these permanently:
+
+| Variable | Value |
+|---|---|
+| `ANTHROPIC_BASE_URL` | `http://127.0.0.1:3200` |
+| `ANTHROPIC_API_KEY` | `unused` |
+
+**Step 2 — Reload VS Code**
+
+`Ctrl+Shift+P` → **Developer: Reload Window** (or quit and reopen).
+
+**Step 3 — Verify**
+
+Open Claude Code sidebar (`Ctrl+Shift+P` → **Claude Code: Open**). Send "hello" — response comes back via DeepSeek.
+
+> The extension picks up env vars on launch. If you set env vars AFTER opening VS Code, reload the window.
+>
+> To switch back to direct Anthropic: unset `ANTHROPIC_BASE_URL`, set `ANTHROPIC_API_KEY` to your real Anthropic key, reload.
+
+---
+
+### Option B — Continue (Alternative)
+
+[Continue](https://marketplace.visualstudio.com/items?itemName=Continue.continue) — open-source, supports custom Anthropic endpoints.
+
+**Step 1 — Install**
 
 VS Code → `Ctrl+Shift+X` → search **Continue** → Install.
 
-### Step 2 — Open Continue sidebar (CRITICAL)
+**Step 2 — Open Continue sidebar (CRITICAL)**
 
 `Ctrl+Shift+P` → type **Continue: Open Chat** → press Enter.
 
@@ -158,7 +191,7 @@ The sidebar opens. This creates the `~/.continue` folder and default `config.jso
 
 > **Skipping this step = file not found.** Continue doesn't create the folder until you open it once.
 
-### Step 3 — Edit config
+**Step 3 — Edit config**
 
 `Ctrl+Shift+P` → **Continue: Open config.json** → replace all contents with:
 
@@ -192,32 +225,35 @@ The sidebar opens. This creates the `~/.continue` folder and default `config.jso
 
 Save (`Ctrl+S`).
 
-### Step 4 — Reload + Verify
+**Step 4 — Reload + Verify**
 
 `Ctrl+Shift+P` → **Developer: Reload Window**.
 
-`Ctrl+L` to open Continue sidebar. Select **Sonnet (DeepSeek Pro)** from model dropdown. Send "hello" — if response comes back, everything works.
+`Ctrl+L` to open Continue sidebar. Select **Sonnet (DeepSeek Pro)** from model dropdown. Send "hello" — response comes back.
 
-### Common Issues
+### VS Code Common Issues
 
 | Problem | Fix |
 |---|---|
-| `config.json` not found | Do Step 2 first — open Continue sidebar once |
-| "Unable to connect" | Proxy not running. Run `npx deepclaude-mixed-setup@latest` |
-| Model not in dropdown | Reload VS Code: `Ctrl+Shift+P` → Developer: Reload Window |
-| Tab autocomplete not working | Both `models` AND `tabAutocompleteModel` must have Haiku |
+| Claude Code extension: "no API key" | Env vars not set. Check `echo $ANTHROPIC_BASE_URL` (or `echo $env:ANTHROPIC_BASE_URL` on PowerShell). Reload window. |
+| Claude Code extension: ignores proxy | Set env vars in System Environment Variables, not just shell profile — VS Code may not inherit shell profile exports. |
+| Continue: `config.json` not found | Do Step 2 first — open Continue sidebar once |
+| Continue: "Unable to connect" | Proxy not running. Run `npx deepclaude-mixed-setup@latest` |
+| Continue: Model not in dropdown | Reload VS Code: `Ctrl+Shift+P` → Developer: Reload Window |
+| Continue: Tab autocomplete not working | Both `models` AND `tabAutocompleteModel` must have Haiku |
 
 ### WSL Users
 
-Two approaches:
+**Claude Code extension with Remote-WSL:**
+Env vars set inside WSL are picked up by the extension running in Remote-WSL context. Follow the [Claude Code CLI](#claude-code-cli) Linux instructions inside WSL.
 
-**Approach 1 — VS Code with Remote-WSL (recommended):**
-Follow Steps 1-4 inside your WSL VS Code session (the one connected to Ubuntu). Continue runs in the WSL context. Config goes to `~/.continue/config.json` inside WSL. Proxy reachable at `127.0.0.1:3200` (WSL2 with `networkingMode=mirrored`).
+**Continue with Remote-WSL (recommended for Continue):**
+Follow Steps 1-4 inside your WSL VS Code session. Continue runs in WSL context. Config goes to `~/.continue/config.json` inside WSL. Proxy reachable at `127.0.0.1:3200` (WSL2 with `networkingMode=mirrored`).
 
-**Approach 2 — VS Code on Windows talking to proxy on Windows:**
+**Continue on Windows host:**
 Proxy runs on Windows. Continue extension runs on Windows. Config path: `%USERPROFILE%\.continue\config.json`. Everything uses `127.0.0.1`.
 
-Either way: verify proxy reachable before configuring Continue:
+Either way: verify proxy reachable:
 ```bash
 curl -s http://127.0.0.1:3200/_proxy/status
 ```
