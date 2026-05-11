@@ -142,23 +142,25 @@ Remove or unset `ANTHROPIC_BASE_URL`. Set `ANTHROPIC_API_KEY` to your real Anthr
 
 ---
 
-## VS Code
+## VS Code (Continue)
 
-### Option A — Continue extension (recommended)
+[Continue](https://marketplace.visualstudio.com/items?itemName=Continue.continue) — open-source, supports custom Anthropic endpoints. One extension for all OS.
 
-[Continue](https://marketplace.visualstudio.com/items?itemName=Continue.continue) is open-source, supports custom Anthropic endpoints.
+### Step 1 — Install
 
-#### Setup (All OS)
+VS Code → `Ctrl+Shift+X` → search **Continue** → Install.
 
-1. VS Code → Extensions (`Ctrl+Shift+X`) → search **Continue** → Install
-2. Open Continue config:
-   - **macOS:** `~/.continue/config.json`
-   - **Linux:** `~/.continue/config.json`
-   - **Windows:** `%USERPROFILE%\.continue\config.json` (paste in File Explorer address bar)
-   
-   Or via VS Code: `Ctrl+Shift+P` → **Continue: Open config.json**
+### Step 2 — Open Continue sidebar (CRITICAL)
 
-3. Replace contents with:
+`Ctrl+Shift+P` → type **Continue: Open Chat** → press Enter.
+
+The sidebar opens. This creates the `~/.continue` folder and default `config.json`. Close the sidebar — you'll edit the file directly.
+
+> **Skipping this step = file not found.** Continue doesn't create the folder until you open it once.
+
+### Step 3 — Edit config
+
+`Ctrl+Shift+P` → **Continue: Open config.json** → replace all contents with:
 
 ```json
 {
@@ -188,34 +190,38 @@ Remove or unset `ANTHROPIC_BASE_URL`. Set `ANTHROPIC_API_KEY` to your real Anthr
 }
 ```
 
-4. Save (`Ctrl+S`)
-5. Reload VS Code: `Ctrl+Shift+P` → **Developer: Reload Window**
-6. Open Continue sidebar (`Ctrl+L`) — select "Sonnet (DeepSeek Pro)" from model dropdown
+Save (`Ctrl+S`).
 
-#### Troubleshooting Continue
+### Step 4 — Reload + Verify
 
-- **Model not appearing:** config path must match exactly. Windows: `%USERPROFILE%\.continue\config.json` (not `.txt` extension)
-- **"Unable to connect":** proxy not running — verify with `curl` or `Invoke-RestMethod`
-- **Tab autocomplete not working:** Haiku model must be present in the `models` array AND referenced in `tabAutocompleteModel`
+`Ctrl+Shift+P` → **Developer: Reload Window**.
 
-### Option B — Cline extension
+`Ctrl+L` to open Continue sidebar. Select **Sonnet (DeepSeek Pro)** from model dropdown. Send "hello" — if response comes back, everything works.
 
-[Cline](https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev) supports custom Anthropic base URLs.
+### Common Issues
 
-#### Setup (All OS)
+| Problem | Fix |
+|---|---|
+| `config.json` not found | Do Step 2 first — open Continue sidebar once |
+| "Unable to connect" | Proxy not running. Run `npx deepclaude-mixed-setup@latest` |
+| Model not in dropdown | Reload VS Code: `Ctrl+Shift+P` → Developer: Reload Window |
+| Tab autocomplete not working | Both `models` AND `tabAutocompleteModel` must have Haiku |
 
-1. VS Code → Extensions → search **Cline** → Install
-2. Open Cline sidebar (robot icon in activity bar)
-3. Click gear icon (⚙) → **API Provider**
-4. Set:
-   - **API Provider:** Anthropic
-   - **API Key:** `unused`
-   - **Base URL:** `http://127.0.0.1:3200`
-5. Save. Cline routes through your proxy.
+### WSL Users
 
-### Option C — Anthropic official extension
+Two approaches:
 
-The official Claude VS Code extension does not expose a custom base URL setting. Use Continue or Cline instead.
+**Approach 1 — VS Code with Remote-WSL (recommended):**
+Follow Steps 1-4 inside your WSL VS Code session (the one connected to Ubuntu). Continue runs in the WSL context. Config goes to `~/.continue/config.json` inside WSL. Proxy reachable at `127.0.0.1:3200` (WSL2 with `networkingMode=mirrored`).
+
+**Approach 2 — VS Code on Windows talking to proxy on Windows:**
+Proxy runs on Windows. Continue extension runs on Windows. Config path: `%USERPROFILE%\.continue\config.json`. Everything uses `127.0.0.1`.
+
+Either way: verify proxy reachable before configuring Continue:
+```bash
+curl -s http://127.0.0.1:3200/_proxy/status
+```
+Must show `"deepseekKey": "set"`.
 
 ---
 
