@@ -70,19 +70,25 @@ export function setManagedAllowedDomains({ hosts, merge = true, ...opts }) {
         const tmp = join(tmpdir(), `dcm-managed-${Date.now()}.json`);
         writeFileSync(tmp, json);
 
+        const owner = platform === 'darwin' ? 'root:wheel' : 'root:root';
         const dir = dirname(p);
-        // Single sudo invocation: mkdir + install
-        const cmd = `sudo sh -c 'mkdir -p "${dir}" && cp "${tmp}" "${p}" && chown root:wheel "${p}" && chmod 644 "${p}"'`;
+        const cmd = `sudo sh -c 'mkdir -p "${dir}" && cp "${tmp}" "${p}" && chown ${owner} "${p}" && chmod 644 "${p}"'`;
         execSync(cmd, { stdio: 'inherit' });
 
         try { execSync(`rm -f "${tmp}"`); } catch {}
     } else if (platform === 'win32') {
-        // Windows: write via PowerShell elevated
+        // Windows: write via PowerShell elevated. Use a temp .ps1 to avoid
+        // nested-quote corruption across cmd.exe → powershell → Start-Process.
         const tmp = join(tmpdir(), `dcm-managed-${Date.now()}.json`);
+        const ps1 = join(tmpdir(), `dcm-managed-write-${Date.now()}.ps1`);
         writeFileSync(tmp, json);
         const dir = dirname(p);
-        const ps = `Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile','-Command',"New-Item -ItemType Directory -Force -Path '${dir}' | Out-Null; Copy-Item -Force '${tmp}' '${p}'"`;
-        execSync(`powershell -NoProfile -Command "${ps}"`, { stdio: 'inherit' });
+        const psScript = `New-Item -ItemType Directory -Force -Path '${dir}' | Out-Null; Copy-Item -Force '${tmp}' '${p}'`;
+        writeFileSync(ps1, psScript, 'utf8');
+        const cmd = `powershell -NoProfile -Command "Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile','-File','${ps1}'"`;
+        execSync(cmd, { stdio: 'inherit' });
+        try { execSync(`del "${ps1}"`); } catch {}
+        try { execSync(`del "${tmp}"`); } catch {}
     }
 
     return next;

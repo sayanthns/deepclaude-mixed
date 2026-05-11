@@ -22,8 +22,19 @@ export function install({ nodePath, scriptPath, env }) {
 </Task>`;
     writeFileSync(xmlPath, '﻿' + xml, 'utf16le');
     try { execSync(`schtasks /Delete /TN ${TASK_NAME} /F`, { stdio: 'ignore' }); } catch {}
-    execSync(`schtasks /Create /TN ${TASK_NAME} /XML "${xmlPath}"`);
-    execSync(`schtasks /Run /TN ${TASK_NAME}`);
+
+    try {
+        execSync(`schtasks /Create /TN ${TASK_NAME} /XML "${xmlPath}"`);
+        execSync(`schtasks /Run /TN ${TASK_NAME}`);
+    } catch (e) {
+        console.warn('');
+        console.warn('⚠  Task Scheduler requires Administrator privileges for auto-start.');
+        console.warn('   Profile and deployment mode are set — proxy needs manual start:');
+        console.warn(`   Open Command Prompt and run: node "${scriptPath}"`);
+        console.warn('');
+        console.warn('   For auto-start, re-run this installer from an Administrator terminal.');
+        console.warn('');
+    }
     try { unlinkSync(xmlPath); } catch {}
 }
 
