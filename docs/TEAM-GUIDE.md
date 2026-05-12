@@ -156,7 +156,7 @@ Three options. **Option A** (recommended — one click, zero env vars) or **Opti
 
 `Ctrl+Shift+X` → install both:
 - **Claude Code** (`anthropic.claude-code`)
-- **DeepClaude Mixed** (`sayanthns.deepclaude-mixed`)
+- **DeepClaude Mixed** (`ENfono.deepclaude-mixed`)
 
 **Step 2 — Set API key**
 

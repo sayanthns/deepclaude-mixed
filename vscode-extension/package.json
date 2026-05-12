@@ -3,7 +3,7 @@
   "displayName": "DeepClaude Mixed",
   "description": "Route Claude Code through DeepSeek — zero env var setup. Enter DeepSeek API key, done.",
   "version": "0.1.0",
-  "publisher": "sayanthns",
+  "publisher": "ENfono",
   "license": "MIT",
   "repository": {
     "type": "git",
