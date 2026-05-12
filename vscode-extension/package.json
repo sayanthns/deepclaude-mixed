@@ -1,8 +1,8 @@
 {
   "name": "deepclaude-mixed",
   "displayName": "DeepClaude Mixed",
-  "description": "Route Claude Code through DeepSeek — zero env var setup. Enter DeepSeek API key, done.",
-  "version": "0.1.1",
+  "description": "DeepSeek proxy for Claude Code + Frappe Brain MCP config. One extension, zero env var setup.",
+  "version": "0.1.3",
   "publisher": "ENfono",
   "license": "MIT",
   "repository": {
@@ -32,6 +32,26 @@
       {
         "command": "deepclaude-mixed.showStatus",
         "title": "Show Proxy Status"
+      },
+      {
+        "command": "deepclaude-mixed.configureBrain",
+        "title": "Frappe Brain: Configure"
+      },
+      {
+        "command": "deepclaude-mixed.enableBrain",
+        "title": "Frappe Brain: Enable"
+      },
+      {
+        "command": "deepclaude-mixed.disableBrain",
+        "title": "Frappe Brain: Disable"
+      },
+      {
+        "command": "deepclaude-mixed.toggleBrain",
+        "title": "Frappe Brain: Toggle"
+      },
+      {
+        "command": "deepclaude-mixed.brainStatus",
+        "title": "Frappe Brain: Show Status"
       }
     ],
     "configuration": {

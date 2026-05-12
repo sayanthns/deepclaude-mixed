@@ -1,6 +1,6 @@
 {
   "name": "deepclaude-mixed-setup",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Install Claude Desktop with mixed Anthropic/DeepSeek routing.",
   "type": "module",
   "engines": {

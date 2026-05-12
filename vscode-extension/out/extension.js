@@ -39,6 +39,7 @@ const vscode = __importStar(require("vscode"));
 const proxyManager_1 = require("./proxyManager");
 const statusBar_1 = require("./statusBar");
 const env_1 = require("./env");
+const brain_1 = require("./brain");
 let proxyManager;
 let statusBar;
 let healthPollInterval;
@@ -55,7 +56,9 @@ async function activate(context) {
     proxyManager = new proxyManager_1.ProxyManager(context, outputChannel);
     statusBar = new statusBar_1.StatusBarManager(context);
     // Step 4: Register commands
-    context.subscriptions.push(vscode.commands.registerCommand('deepclaude-mixed.setApiKey', () => handleSetApiKey(context)), vscode.commands.registerCommand('deepclaude-mixed.restartProxy', () => handleRestart()), vscode.commands.registerCommand('deepclaude-mixed.showStatus', () => handleShowStatus(outputChannel)));
+    context.subscriptions.push(vscode.commands.registerCommand('deepclaude-mixed.setApiKey', () => handleSetApiKey(context)), vscode.commands.registerCommand('deepclaude-mixed.restartProxy', () => handleRestart()), vscode.commands.registerCommand('deepclaude-mixed.showStatus', () => handleShowStatus(outputChannel)), 
+    // Frappe Brain commands
+    vscode.commands.registerCommand('deepclaude-mixed.configureBrain', () => handleConfigureBrain(context)), vscode.commands.registerCommand('deepclaude-mixed.enableBrain', () => (0, brain_1.enableBrain)(context)), vscode.commands.registerCommand('deepclaude-mixed.disableBrain', () => (0, brain_1.disableBrain)()), vscode.commands.registerCommand('deepclaude-mixed.toggleBrain', () => (0, brain_1.toggleBrain)(context)), vscode.commands.registerCommand('deepclaude-mixed.brainStatus', () => (0, brain_1.showBrainStatus)(outputChannel)));
     // Step 5: Listen for port config changes
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('deepclaude-mixed.proxyPort')) {
@@ -159,6 +162,12 @@ async function handleShowStatus(outputChannel) {
     else {
         outputChannel.appendLine('[deepclaude-mixed] Proxy is not running.');
         vscode.window.showInformationMessage('DeepClaude Mixed proxy is not running.');
+    }
+}
+async function handleConfigureBrain(context) {
+    const ok = await (0, brain_1.setBrainApiKey)(context);
+    if (ok) {
+        await (0, brain_1.enableBrain)(context);
     }
 }
 function startHealthPolling(context) {

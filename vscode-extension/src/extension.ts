@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ProxyManager } from './proxyManager';
 import { StatusBarManager } from './statusBar';
 import { injectEnvVars, clearEnvVars } from './env';
+import { setBrainApiKey, enableBrain, disableBrain, toggleBrain, showBrainStatus } from './brain';
 
 let proxyManager: ProxyManager;
 let statusBar: StatusBarManager;
@@ -27,6 +28,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         vscode.commands.registerCommand('deepclaude-mixed.setApiKey', () => handleSetApiKey(context)),
         vscode.commands.registerCommand('deepclaude-mixed.restartProxy', () => handleRestart()),
         vscode.commands.registerCommand('deepclaude-mixed.showStatus', () => handleShowStatus(outputChannel)),
+        // Frappe Brain commands
+        vscode.commands.registerCommand('deepclaude-mixed.configureBrain', () => handleConfigureBrain(context)),
+        vscode.commands.registerCommand('deepclaude-mixed.enableBrain', () => enableBrain(context)),
+        vscode.commands.registerCommand('deepclaude-mixed.disableBrain', () => disableBrain()),
+        vscode.commands.registerCommand('deepclaude-mixed.toggleBrain', () => toggleBrain(context)),
+        vscode.commands.registerCommand('deepclaude-mixed.brainStatus', () => showBrainStatus(outputChannel)),
     );
 
     // Step 5: Listen for port config changes
@@ -137,6 +144,13 @@ async function handleShowStatus(outputChannel: vscode.OutputChannel): Promise<vo
     } else {
         outputChannel.appendLine('[deepclaude-mixed] Proxy is not running.');
         vscode.window.showInformationMessage('DeepClaude Mixed proxy is not running.');
+    }
+}
+
+async function handleConfigureBrain(context: vscode.ExtensionContext): Promise<void> {
+    const ok = await setBrainApiKey(context);
+    if (ok) {
+        await enableBrain(context);
     }
 }
 
