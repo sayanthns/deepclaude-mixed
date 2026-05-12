@@ -144,13 +144,44 @@ Remove or unset `ANTHROPIC_BASE_URL`. Set `ANTHROPIC_API_KEY` to your real Anthr
 
 ## VS Code
 
-Two options. **Claude Code extension** (recommended — what the team uses) or **Continue** (open-source alternative).
-
-> **Critical:** GUI apps (VS Code) do NOT inherit shell profile exports (`~/.zshrc`, `~/.bashrc`) on macOS or Linux. Each OS needs a different method to pass env vars to VS Code.
+Three options. **Option A** (recommended — one click, zero env vars) or **Option B** (env vars) or **Option C** (Continue).
 
 ---
 
-### Option A — Claude Code Extension (Recommended)
+### Option A — DeepClaude Mixed Extension (Recommended)
+
+**Zero env var setup.** A companion VS Code extension that manages the proxy and auto-configures the Claude Code extension. Works identically on macOS, Windows, Linux, WSL.
+
+**Step 1 — Install both extensions**
+
+`Ctrl+Shift+X` → install both:
+- **Claude Code** (`anthropic.claude-code`)
+- **DeepClaude Mixed** (`sayanthns.deepclaude-mixed`)
+
+**Step 2 — Set API key**
+
+`Ctrl+Shift+P` → **DeepClaude Mixed: Set DeepSeek API Key** → paste your key → Enter.
+
+**Done.** Status bar shows `✓ DeepClaude :3200`. Open Claude Code (`Ctrl+Shift+P` → **Claude Code: Open**) and start using — all messages route through DeepSeek.
+
+> **How it works:** The extension starts the proxy as a VS Code subprocess, stores your API key in the OS keychain (never in plaintext), and sets environment variables that the Claude Code extension inherits when it spawns the CLI.
+>
+> Available commands:
+> - **DeepClaude Mixed: Set DeepSeek API Key** — update your key
+> - **DeepClaude Mixed: Restart Proxy** — restart manually
+> - **DeepClaude Mixed: Show Proxy Status** — view proxy logs
+
+| Setting | Default | Description |
+|---|---|---|
+| `deepclaude-mixed.proxyPort` | `3200` | Local proxy port |
+| `deepclaude-mixed.autoStart` | `true` | Start proxy on VS Code launch |
+| `deepclaude-mixed.healthPollIntervalSec` | `30` | Health check interval (10-300) |
+
+---
+
+### Option B — Claude Code Extension (Manual Env Vars)
+
+Set env vars manually. **Skip if using Option A.**
 
 The official [Claude Code VS Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code) wraps the Claude Code CLI. It needs two env vars:
 
@@ -158,6 +189,8 @@ The official [Claude Code VS Code extension](https://marketplace.visualstudio.co
 |---|---|
 | `ANTHROPIC_BASE_URL` | `http://127.0.0.1:3200` |
 | `ANTHROPIC_API_KEY` | `unused` |
+
+> **Critical:** GUI apps (VS Code) do NOT inherit shell profile exports (`~/.zshrc`, `~/.bashrc`) on macOS or Linux. Each OS needs a different method to pass env vars to VS Code.
 
 ---
 
@@ -373,7 +406,7 @@ echo $env:ANTHROPIC_BASE_URL    # Windows PowerShell
 
 ---
 
-### Option B — Continue (Alternative)
+### Option C — Continue (Alternative)
 
 [Continue](https://marketplace.visualstudio.com/items?itemName=Continue.continue) — open-source, supports custom Anthropic endpoints.
 
@@ -433,14 +466,21 @@ Save (`Ctrl+S`).
 
 | Problem | Fix |
 |---|---|
-| Claude Code extension: "no API key" | Env vars not set. Check `echo $ANTHROPIC_BASE_URL` (or `echo $env:ANTHROPIC_BASE_URL` on PowerShell). Reload window. |
-| Claude Code extension: ignores proxy | Set env vars in System Environment Variables, not just shell profile — VS Code may not inherit shell profile exports. |
+| DeepClaude Mixed: "API key not set" | `Ctrl+Shift+P` → DeepClaude Mixed: Set DeepSeek API Key |
+| DeepClaude Mixed: "EADDRINUSE" | Another proxy is on port 3200. Change `deepclaude-mixed.proxyPort` in settings or kill the other process. |
+| Claude Code extension: "no API key" (Option B) | Env vars not set. Check `echo $ANTHROPIC_BASE_URL` (or `echo $env:ANTHROPIC_BASE_URL` on PowerShell). Reload window. |
+| Claude Code extension: ignores proxy (Option B) | Set env vars in System Environment Variables, not just shell profile — VS Code may not inherit shell profile exports. |
 | Continue: `config.json` not found | Do Step 2 first — open Continue sidebar once |
 | Continue: "Unable to connect" | Proxy not running. Run `npx deepclaude-mixed-setup@latest` |
 | Continue: Model not in dropdown | Reload VS Code: `Ctrl+Shift+P` → Developer: Reload Window |
 | Continue: Tab autocomplete not working | Both `models` AND `tabAutocompleteModel` must have Haiku |
 
 ### WSL Users (Windows Subsystem for Linux)
+
+**Option A — DeepClaude Mixed extension (recommended):**
+Works automatically on WSL. Install the extension in your VS Code session, set API key, done. The extension manages the proxy inside VS Code's extension host — no WSL-specific proxy installation needed.
+
+**Option B — Proxy inside WSL (manual):**
 
 > **Do not rely on the Windows-side proxy from WSL.** WSL's `127.0.0.1` is its own loopback — the Windows proxy at `127.0.0.1:3200` is not reachable. Install the proxy **inside WSL** instead.
 

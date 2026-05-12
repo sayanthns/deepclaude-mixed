@@ -1,0 +1,78 @@
+{
+  "name": "deepclaude-mixed",
+  "displayName": "DeepClaude Mixed",
+  "description": "Route Claude Code through DeepSeek — zero env var setup. Enter DeepSeek API key, done.",
+  "version": "0.1.0",
+  "publisher": "sayanthns",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sayanthns/deepclaude-mixed"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:deepclaude-mixed.setApiKey",
+    "onCommand:deepclaude-mixed.restartProxy",
+    "onCommand:deepclaude-mixed.showStatus"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "deepclaude-mixed.setApiKey",
+        "title": "Set DeepSeek API Key"
+      },
+      {
+        "command": "deepclaude-mixed.restartProxy",
+        "title": "Restart Proxy"
+      },
+      {
+        "command": "deepclaude-mixed.showStatus",
+        "title": "Show Proxy Status"
+      }
+    ],
+    "configuration": {
+      "title": "DeepClaude Mixed",
+      "properties": {
+        "deepclaude-mixed.proxyPort": {
+          "type": "number",
+          "default": 3200,
+          "description": "Local port for the proxy (127.0.0.1)"
+        },
+        "deepclaude-mixed.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Start proxy automatically when VS Code starts"
+        },
+        "deepclaude-mixed.healthPollIntervalSec": {
+          "type": "number",
+          "default": 30,
+          "description": "Seconds between health check polls (10-300)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "tsc --noEmit",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTests.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.3.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.0"
+  }
+}
