@@ -36,7 +36,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                 const newPort = vscode.workspace.getConfiguration('deepclaude-mixed').get<number>('proxyPort', 3200);
                 proxyManager.setPort(newPort);
                 injectEnvVars(newPort);
-                handleRestart(); // restart with new port
+                handleRestart();
             }
             if (e.affectsConfiguration('deepclaude-mixed.healthPollIntervalSec')) {
                 startHealthPolling(context);
@@ -48,8 +48,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const autoStart = vscode.workspace.getConfiguration('deepclaude-mixed').get<boolean>('autoStart', true);
     if (autoStart) {
         try {
-            await proxyManager.start();
-            statusBar.setHealthy(proxyManager.getPort());
+            const actualPort = await proxyManager.start();
+            // Update env vars to actual port (may differ if auto-incremented from 3200→3201)
+            injectEnvVars(actualPort);
+            statusBar.setHealthy(actualPort);
+
+            // If port changed, tell user
+            if (actualPort !== port) {
+                const msg = proxyManager.isReusingExisting()
+                    ? `DeepClaude: Using existing proxy on port ${actualPort}`
+                    : `DeepClaude: Port ${port} in use — proxy on port ${actualPort}`;
+                vscode.window.showInformationMessage(msg);
+            }
         } catch (e: any) {
             if (e.message?.includes('API key')) {
                 const action = await vscode.window.showWarningMessage(
@@ -58,8 +68,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                 );
                 if (action === 'Set API Key') {
                     await handleSetApiKey(context);
-                    try { await proxyManager.start(); statusBar.setHealthy(proxyManager.getPort()); }
-                    catch (e2: any) { statusBar.setError(e2.message); }
+                    try {
+                        const actualPort = await proxyManager.start();
+                        injectEnvVars(actualPort);
+                        statusBar.setHealthy(actualPort);
+                    } catch (e2: any) { statusBar.setError(e2.message); }
                 }
             } else {
                 statusBar.setError(e.message);

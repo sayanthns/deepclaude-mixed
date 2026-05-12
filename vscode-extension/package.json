@@ -16,10 +16,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:deepclaude-mixed.setApiKey",
-    "onCommand:deepclaude-mixed.restartProxy",
-    "onCommand:deepclaude-mixed.showStatus"
+    "*"
   ],
   "main": "./out/extension.js",
   "contributes": {

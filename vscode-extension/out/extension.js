@@ -62,7 +62,7 @@ async function activate(context) {
             const newPort = vscode.workspace.getConfiguration('deepclaude-mixed').get('proxyPort', 3200);
             proxyManager.setPort(newPort);
             (0, env_1.injectEnvVars)(newPort);
-            handleRestart(); // restart with new port
+            handleRestart();
         }
         if (e.affectsConfiguration('deepclaude-mixed.healthPollIntervalSec')) {
             startHealthPolling(context);
@@ -72,8 +72,17 @@ async function activate(context) {
     const autoStart = vscode.workspace.getConfiguration('deepclaude-mixed').get('autoStart', true);
     if (autoStart) {
         try {
-            await proxyManager.start();
-            statusBar.setHealthy(proxyManager.getPort());
+            const actualPort = await proxyManager.start();
+            // Update env vars to actual port (may differ if auto-incremented from 3200→3201)
+            (0, env_1.injectEnvVars)(actualPort);
+            statusBar.setHealthy(actualPort);
+            // If port changed, tell user
+            if (actualPort !== port) {
+                const msg = proxyManager.isReusingExisting()
+                    ? `DeepClaude: Using existing proxy on port ${actualPort}`
+                    : `DeepClaude: Port ${port} in use — proxy on port ${actualPort}`;
+                vscode.window.showInformationMessage(msg);
+            }
         }
         catch (e) {
             if (e.message?.includes('API key')) {
@@ -81,8 +90,9 @@ async function activate(context) {
                 if (action === 'Set API Key') {
                     await handleSetApiKey(context);
                     try {
-                        await proxyManager.start();
-                        statusBar.setHealthy(proxyManager.getPort());
+                        const actualPort = await proxyManager.start();
+                        (0, env_1.injectEnvVars)(actualPort);
+                        statusBar.setHealthy(actualPort);
                     }
                     catch (e2) {
                         statusBar.setError(e2.message);
