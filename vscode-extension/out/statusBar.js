@@ -37,6 +37,7 @@ exports.StatusBarManager = void 0;
 const vscode = __importStar(require("vscode"));
 class StatusBarManager {
     item;
+    currentMode = '3p';
     constructor(context) {
         this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
         this.item.command = 'deepclaude-mixed.showStatus';
@@ -45,22 +46,40 @@ class StatusBarManager {
         this.item.show();
         context.subscriptions.push(this.item);
     }
+    setMode(mode) {
+        this.currentMode = mode;
+    }
+    getMode() {
+        return this.currentMode;
+    }
     setHealthy(port) {
-        this.item.text = `$(check) DeepClaude :${port}`;
+        const modeLabel = this.currentMode === '3p' ? '3p' : '1p';
+        this.item.text = `$(check) DeepClaude :${port} ${modeLabel}`;
         this.item.backgroundColor = undefined;
-        this.item.tooltip = `DeepClaude Mixed proxy — running on 127.0.0.1:${port}`;
+        this.item.tooltip = `DeepClaude Mixed — ${this.currentMode === '3p' ? 'DeepSeek proxy' : 'Anthropic direct'} on 127.0.0.1:${port}\nClick to show status`;
+        this.item.command = 'deepclaude-mixed.showStatus';
+    }
+    setHealthy1p() {
+        this.setMode('1p');
+        this.item.text = `$(circle-slash) DeepClaude 1p`;
+        this.item.backgroundColor = undefined;
+        this.item.tooltip = 'DeepClaude Mixed — Anthropic direct (proxy bypassed)\nClick to show status';
+        this.item.command = 'deepclaude-mixed.showStatus';
     }
     setError(msg) {
         this.item.text = `$(error) DeepClaude`;
         this.item.tooltip = `Proxy error: ${msg}`;
+        this.item.command = 'deepclaude-mixed.showStatus';
     }
     setStarting() {
         this.item.text = `$(sync~spin) DeepClaude`;
         this.item.tooltip = 'DeepClaude Mixed proxy — starting...';
+        this.item.command = 'deepclaude-mixed.showStatus';
     }
     setStopped() {
         this.item.text = `$(circle-slash) DeepClaude`;
         this.item.tooltip = 'DeepClaude Mixed proxy — stopped (auto-start disabled)';
+        this.item.command = 'deepclaude-mixed.showStatus';
     }
 }
 exports.StatusBarManager = StatusBarManager;

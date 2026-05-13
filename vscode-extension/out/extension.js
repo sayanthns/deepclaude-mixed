@@ -44,42 +44,51 @@ let proxyManager;
 let statusBar;
 let healthPollInterval;
 async function activate(context) {
-    // Step 1: Inject env vars IMMEDIATELY. Must happen before any other
-    // extension spawns a child process (the Claude Code extension inherits
-    // these when it spawns the Claude Code CLI).
+    // Step 1: Read stored deployment mode (default 3p)
+    const storedMode = (0, env_1.getMode)(context);
+    // Step 2: Inject env vars ONLY if in 3p mode
     const port = vscode.workspace.getConfiguration('deepclaude-mixed').get('proxyPort', 3200);
-    (0, env_1.injectEnvVars)(port);
-    // Step 2: Create output channel for proxy logs
+    if (storedMode === '3p') {
+        (0, env_1.injectEnvVars)(port);
+    }
+    // Step 3: Create output channel for proxy logs
     const outputChannel = vscode.window.createOutputChannel('DeepClaude Mixed', { log: true });
     context.subscriptions.push(outputChannel);
-    // Step 3: Initialize managers
+    // Step 4: Initialize managers
     proxyManager = new proxyManager_1.ProxyManager(context, outputChannel);
     statusBar = new statusBar_1.StatusBarManager(context);
-    // Step 4: Register commands
-    context.subscriptions.push(vscode.commands.registerCommand('deepclaude-mixed.setApiKey', () => handleSetApiKey(context)), vscode.commands.registerCommand('deepclaude-mixed.restartProxy', () => handleRestart()), vscode.commands.registerCommand('deepclaude-mixed.showStatus', () => handleShowStatus(outputChannel)), 
+    statusBar.setMode(storedMode);
+    // Step 5: Register commands
+    context.subscriptions.push(vscode.commands.registerCommand('deepclaude-mixed.setApiKey', () => handleSetApiKey(context)), vscode.commands.registerCommand('deepclaude-mixed.restartProxy', () => handleRestart()), vscode.commands.registerCommand('deepclaude-mixed.showStatus', () => handleShowStatus(outputChannel)), vscode.commands.registerCommand('deepclaude-mixed.toggleMode', () => handleToggleMode(context, outputChannel)), 
     // Frappe Brain commands
     vscode.commands.registerCommand('deepclaude-mixed.configureBrain', () => handleConfigureBrain(context)), vscode.commands.registerCommand('deepclaude-mixed.enableBrain', () => (0, brain_1.enableBrain)(context)), vscode.commands.registerCommand('deepclaude-mixed.disableBrain', () => (0, brain_1.disableBrain)()), vscode.commands.registerCommand('deepclaude-mixed.toggleBrain', () => (0, brain_1.toggleBrain)(context)), vscode.commands.registerCommand('deepclaude-mixed.brainStatus', () => (0, brain_1.showBrainStatus)(outputChannel)));
-    // Step 5: Listen for port config changes
+    // Step 6: Listen for port config changes
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('deepclaude-mixed.proxyPort')) {
             const newPort = vscode.workspace.getConfiguration('deepclaude-mixed').get('proxyPort', 3200);
             proxyManager.setPort(newPort);
-            (0, env_1.injectEnvVars)(newPort);
+            const mode = (0, env_1.getMode)(context);
+            if (mode === '3p') {
+                (0, env_1.injectEnvVars)(newPort);
+            }
             handleRestart();
         }
         if (e.affectsConfiguration('deepclaude-mixed.healthPollIntervalSec')) {
             startHealthPolling(context);
         }
     }));
-    // Step 6: Auto-start proxy
+    // Step 7: Auto-start proxy (3p mode only)
     const autoStart = vscode.workspace.getConfiguration('deepclaude-mixed').get('autoStart', true);
-    if (autoStart) {
+    if (storedMode === '1p') {
+        // 1p mode: skip proxy, show direct
+        statusBar.setHealthy1p();
+        outputChannel.appendLine('[deepclaude-mixed] 1p mode — proxy bypassed, using Anthropic direct');
+    }
+    else if (autoStart) {
         try {
             const actualPort = await proxyManager.start();
-            // Update env vars to actual port (may differ if auto-incremented from 3200→3201)
             (0, env_1.injectEnvVars)(actualPort);
             statusBar.setHealthy(actualPort);
-            // If port changed, tell user
             if (actualPort !== port) {
                 const msg = proxyManager.isReusingExisting()
                     ? `DeepClaude: Using existing proxy on port ${actualPort}`
@@ -110,7 +119,7 @@ async function activate(context) {
     else {
         statusBar.setStopped();
     }
-    // Step 7: Start health polling
+    // Step 8: Start health polling
     startHealthPolling(context);
 }
 async function deactivate() {
@@ -151,17 +160,67 @@ async function handleRestart() {
         vscode.window.showErrorMessage(`Failed to start proxy: ${e.message}`);
     }
 }
-async function handleShowStatus(outputChannel) {
-    outputChannel.show();
-    const healthy = await proxyManager?.isRunning().catch(() => false);
-    if (healthy) {
-        const status = await proxyManager?.getStatus();
-        outputChannel.appendLine(JSON.stringify(status, null, 2));
-        vscode.window.showInformationMessage('DeepClaude Mixed proxy is running.');
+async function handleToggleMode(context, outputChannel) {
+    const current = (0, env_1.getMode)(context);
+    const target = current === '3p' ? '1p' : '3p';
+    const port = proxyManager?.getPort() || vscode.workspace.getConfiguration('deepclaude-mixed').get('proxyPort', 3200);
+    if (target === '1p') {
+        // Switching to 1p: clear env vars so Claude Code uses its own auth
+        await (0, env_1.setMode)(context, '1p');
+        statusBar.setHealthy1p();
+        outputChannel.appendLine('[deepclaude-mixed] Switched to 1p — Anthropic direct (proxy bypassed)');
+        vscode.window.showInformationMessage('Switched to 1p (Anthropic direct). Reload VS Code window for Claude Code to pick up changes.', 'Reload Window').then(action => {
+            if (action === 'Reload Window') {
+                vscode.commands.executeCommand('workbench.action.reloadWindow');
+            }
+        });
     }
     else {
-        outputChannel.appendLine('[deepclaude-mixed] Proxy is not running.');
-        vscode.window.showInformationMessage('DeepClaude Mixed proxy is not running.');
+        // Switching to 3p: inject env vars, ensure proxy running
+        await (0, env_1.setMode)(context, '3p', port);
+        statusBar.setMode('3p');
+        // Start proxy if not running
+        const healthy = await proxyManager?.isRunning().catch(() => false);
+        if (!healthy) {
+            try {
+                const actualPort = await proxyManager?.start();
+                if (actualPort && actualPort !== port) {
+                    (0, env_1.injectEnvVars)(actualPort);
+                }
+                statusBar.setHealthy(proxyManager?.getPort() || port);
+                outputChannel.appendLine(`[deepclaude-mixed] Switched to 3p — proxy on port ${proxyManager?.getPort() || port}`);
+            }
+            catch (e) {
+                statusBar.setError(e.message);
+                vscode.window.showErrorMessage(`Failed to start proxy: ${e.message}`);
+                return;
+            }
+        }
+        else {
+            statusBar.setHealthy(proxyManager?.getPort() || port);
+            outputChannel.appendLine(`[deepclaude-mixed] Switched to 3p — reusing proxy on port ${proxyManager?.getPort() || port}`);
+        }
+        vscode.window.showInformationMessage('Switched to 3p (DeepSeek proxy). Reload VS Code window for Claude Code to pick up changes.', 'Reload Window').then(action => {
+            if (action === 'Reload Window') {
+                vscode.commands.executeCommand('workbench.action.reloadWindow');
+            }
+        });
+    }
+}
+async function handleShowStatus(outputChannel) {
+    outputChannel.show();
+    const mode = statusBar?.getMode() || '3p';
+    const healthy = await proxyManager?.isRunning().catch(() => false);
+    outputChannel.appendLine(`Mode: ${mode} (${mode === '3p' ? 'DeepSeek proxy' : 'Anthropic direct'})`);
+    if (mode === '1p') {
+        outputChannel.appendLine('[deepclaude-mixed] 1p mode — proxy bypassed. Claude Code uses its own auth.');
+    }
+    else if (healthy) {
+        const status = await proxyManager?.getStatus();
+        outputChannel.appendLine(JSON.stringify(status, null, 2));
+    }
+    else {
+        outputChannel.appendLine('[deepclaude-mixed] 3p mode — proxy is not running.');
     }
 }
 async function handleConfigureBrain(context) {
@@ -176,6 +235,11 @@ function startHealthPolling(context) {
     const config = vscode.workspace.getConfiguration('deepclaude-mixed');
     const intervalSec = Math.max(10, Math.min(300, config.get('healthPollIntervalSec', 30)));
     healthPollInterval = setInterval(async () => {
+        const mode = statusBar?.getMode() || '3p';
+        if (mode === '1p') {
+            statusBar?.setHealthy1p();
+            return;
+        }
         const healthy = await proxyManager?.isRunning().catch(() => false);
         if (healthy) {
             statusBar?.setHealthy(proxyManager.getPort());

@@ -2,7 +2,7 @@
   "name": "deepclaude-mixed",
   "displayName": "DeepClaude Mixed",
   "description": "DeepSeek proxy for Claude Code + Frappe Brain MCP config. One extension, zero env var setup.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "ENfono",
   "license": "MIT",
   "repository": {
@@ -32,6 +32,10 @@
       {
         "command": "deepclaude-mixed.showStatus",
         "title": "Show Proxy Status"
+      },
+      {
+        "command": "deepclaude-mixed.toggleMode",
+        "title": "Toggle 1p/3p Mode"
       },
       {
         "command": "deepclaude-mixed.configureBrain",
